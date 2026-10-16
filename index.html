@@ -248,6 +248,7 @@ button{font-family:inherit;color:inherit}
       <nav class="tabs" id="tabs" aria-label="เมนูหลัก">
         <button type="button" class="tab" data-k="ov" aria-current="page"><svg><use href="#i-home"/></svg>ภาพรวม</button>
         <button type="button" class="tab" data-k="fuel"><svg><use href="#i-fuel"/></svg>น้ำมัน</button>
+        <button type="button" class="tab" data-k="amz"><svg><use href="#i-shop"/></svg>Café Amazon</button>
         <button type="button" class="tab" data-k="shop"><svg><use href="#i-shop"/></svg>ร้านค้า</button>
         <button type="button" class="tab" data-k="stock"><svg><use href="#i-stock"/></svg>สต็อก</button>
         <button type="button" class="tab" data-k="money"><svg><use href="#i-money"/></svg>การเงิน</button>
@@ -312,6 +313,7 @@ button{font-family:inherit;color:inherit}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="config.js"></script>
 <script src="sales.js"></script>
+<script src="amz.js"></script>
 <script>
 (function(){
 'use strict';
@@ -839,7 +841,7 @@ function mergeStatic(grp){
 }
 mergeStatic(root);
 
-/* ---------- signs (วางโลโก้จริงได้ที่ ptt.png,amz.png,sev.png) ---------- */
+/* ---------- signs (วางโลโก้จริงได้ที่ ptt.png, amz.png, sev.png) ---------- */
 var FF="Prompt,'Noto Sans Thai',system-ui,sans-serif";
 var signs=[],LOGO={};
 function fit(g,t,cx,cy,maxW,wt,col,size){
@@ -948,7 +950,7 @@ function repaintSigns(){signs.forEach(function(s){s.paint()})}
   var im=new Image();
   im.onload=function(){LOGO[k]=im;repaintSigns()};
   im.onerror=function(){};
-  im.src=''+k+'.png';
+  im.src=k+'.png';
 });
 if(document.fonts&&document.fonts.load){
   Promise.all([document.fonts.load('700 40px Prompt'),document.fonts.load('600 40px Prompt')]).then(repaintSigns,function(){});
@@ -1069,7 +1071,7 @@ function openPin(d){
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&openId){closePop();resetFocus()}});
 
 /* tabs */
-var FOCUS={ov:[0,7,1],fuel:[1,12,.55],shop:[2,-7,.6],stock:[-24,10,.5],tool:[-10,11,.7]};
+var FOCUS={ov:[0,7,1],fuel:[1,12,.55],amz:[2,-7,.6],shop:[2,-7,.6],stock:[-24,10,.5],tool:[-10,11,.7]};
 var tabsEl=$('#tabs'),toastTimer=0;
 tabsEl.addEventListener('click',function(e){
   var b=e.target.closest('.tab');if(!b)return;

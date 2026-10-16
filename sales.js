@@ -457,9 +457,11 @@
     '.sx-ov{position:fixed;inset:0;z-index:80;background:rgba(15,29,58,.55);backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;padding:4vh 16px;overflow:auto}.sx-md{width:min(1300px,100%);background:#fff;border-radius:22px;box-shadow:0 20px 60px rgba(11,26,58,.4);padding:20px 24px 24px;position:relative}.sx-md .sx-h h3{font-size:22px}' +
     '.sx-md .sx-x{position:absolute;right:16px;top:14px;width:36px;height:36px;border-radius:50%;border:0;background:#eef3fa;font-size:18px;cursor:pointer}.sx-md .sx-fil{box-shadow:none;border:1px solid #e4ebf5;padding:10px 12px;margin:10px 0}' +
     '#sxtip{position:fixed;z-index:120;pointer-events:none;background:#17233a;color:#fff;border-radius:10px;padding:8px 11px;font-size:12.5px;line-height:1.5;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.3)}#sxtip[hidden]{display:none}#sxtip .sx-dot{margin-right:5px}' +
+    '.sx-logo{height:46px;width:auto;max-width:90px;object-fit:contain;display:block}.sx-top h1{display:flex;align-items:center}' +
     '.sx-load{padding:80px 20px;text-align:center;color:#51617c;font-size:15px}' +
     '@media(max-width:1100px){.sx-kpis{grid-template-columns:repeat(2,1fr)}.g2,.g3,.g4{grid-template-columns:1fr}.sx-mini{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.sx-in{padding:10px 10px 30px}.sx-md{padding:16px 12px}}';
 
+  window.SX_CSS = CSS;
   function chipRow(items, cur, attr, extra) {
     return items.map(function (i) { return '<button type="button" class="sx-chip ' + (extra || '') + '" ' + attr + '="' + i[0] + '" aria-pressed="' + (String(cur) === String(i[0])) + '">' + i[1] + '</button>'; }).join('');
   }
@@ -537,7 +539,7 @@
 
   var pageCards = [];
   function build() {
-    root.innerHTML = '<div class="sx-in"><div class="sx-top"><button type="button" class="sx-back" id="sxBack">← ภาพรวม</button><h1>ยอดขายน้ำมัน</h1><span class="by" id="sxBy"></span></div>' +
+    root.innerHTML = '<div class="sx-in"><div class="sx-top"><button type="button" class="sx-back" id="sxBack">← ภาพรวม</button><img class="sx-logo" src="pttm.png" alt="ปตท."><h1>ยอดขายน้ำมัน</h1><span class="by" id="sxBy"></span></div>' +
       '<div class="sx-card sx-fil" id="sxFil"></div><div class="sx-kpis" id="sxK"></div>' +
       '<div class="sx-grid g2" id="r1"></div><div class="sx-grid g3" id="r2"></div><div class="sx-grid g4" id="r3"></div>' +
       '<div class="sx-note" style="text-align:center;background:none">เกณฑ์ขนาดรถ: ≤4 ลิตร เล็ก · >4–80 ลิตร กลาง · >80 ลิตร ใหญ่ · 1 รายการ = 1 คัน (รายงานลูกค้าทั่วไป) · รายการ “เปลี่ยนแปลงการชำระ” ที่ซ้ำนับเป็น 1 รายการ</div>' +
@@ -586,7 +588,7 @@
   }
   function load() {
     if (loading) return; loading = true;
-    root.innerHTML = '<div class="sx-in"><div class="sx-top"><button type="button" class="sx-back" id="sxBack">← ภาพรวม</button><h1>ยอดขายน้ำมัน</h1></div><div class="sx-load">กำลังโหลดข้อมูล…</div></div>';
+    root.innerHTML = '<div class="sx-in"><div class="sx-top"><button type="button" class="sx-back" id="sxBack">← ภาพรวม</button><img class="sx-logo" src="pttm.png" alt="ปตท."><h1>ยอดขายน้ำมัน</h1></div><div class="sx-load">กำลังโหลดข้อมูล…</div></div>';
     root.querySelector('#sxBack').onclick = close;
     var u = endpoint();
     (u ? fetchJson(u) : fetchJson('sales-sample.json')).then(function (p) {
@@ -608,9 +610,10 @@
   }
   function close() { closeModal(); window.SX_OPEN = false; if (root) root.hidden = true; document.body.style.overflow = ''; var t = document.querySelector('.tab[data-k="ov"]'); if (t) t.click(); }
   function init() {
-    var st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
+    if (!document.getElementById('sxcss')) { var st = document.createElement('style'); st.id = 'sxcss'; st.textContent = CSS; document.head.appendChild(st); }
     root = document.createElement('div'); root.id = 'sx'; root.hidden = true; document.body.appendChild(root);
-    tipEl = document.createElement('div'); tipEl.id = 'sxtip'; tipEl.hidden = true; document.body.appendChild(tipEl);
+    tipEl = document.getElementById('sxtip');
+    if (!tipEl) { tipEl = document.createElement('div'); tipEl.id = 'sxtip'; tipEl.hidden = true; document.body.appendChild(tipEl);
     document.addEventListener('mousemove', function (e) {
       var t = e.target.closest && e.target.closest('[data-tip]');
       if (!t) { tipEl.hidden = true; return; }
@@ -618,7 +621,7 @@
       var w = tipEl.offsetWidth, h = tipEl.offsetHeight, x = e.clientX + 14, y = e.clientY + 14;
       if (x + w > innerWidth - 8) x = e.clientX - w - 14; if (y + h > innerHeight - 8) y = e.clientY - h - 14;
       tipEl.style.left = Math.max(4, x) + 'px'; tipEl.style.top = Math.max(4, y) + 'px';
-    });
+    }); }
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (modal) closeModal(); else if (root && !root.hidden) close(); } });
     var rz = 0; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { if (root && !root.hidden && loaded) { pageCards.forEach(paint); if (modal) modal.repaint(); } }, 150); });
   }
