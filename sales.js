@@ -530,7 +530,7 @@
     var tb = tot(st.from, st.to, st.fsel, 'baht', -1), tl = tot(st.from, st.to, st.fsel, 'L', -1), tc = tot(st.from, st.to, st.fsel, 'cars', -1), nd = daysIn(st.from, st.to);
     var P = function (u) { return usePrev ? tot(pv.from, pv.to, st.fsel, u, -1) : 0; }, pnd = usePrev ? daysIn(pv.from, pv.to) : 0;
     var D = function (a, b) { return usePrev && b ? dtag(dlt(a, b)) : '<div class="sx-d">&nbsp;</div>'; };
-    var K = [['ยอดขายรวม', n(tb), 'บาท', D(tb, P('baht'))], ['ปริมาณขาย', n(tl), 'ลิตร', D(tl, P('L'))], ['จำนวนรถ', n(tc), 'คัน', D(tc, P('cars'))],
+    var K = [['ยอดขายรวม', n(tb), 'บาท', D(tb, P('baht'))], ['ปริมาณขาย (จาก POS)*', n(tl), 'ลิตร', D(tl, P('L'))], ['จำนวนรถ', n(tc), 'คัน', D(tc, P('cars'))],
       ['Ticket size เฉลี่ย', tc ? n(tb / tc) : '–', 'บาท/คัน', D(tc ? tb / tc : 0, P('cars') ? P('baht') / P('cars') : 0)], ['เฉลี่ยต่อวัน', nd ? n(tc / nd) : '–', 'คัน', D(nd ? tc / nd : 0, pnd ? P('cars') / pnd : 0)]];
     return K.map(function (k) { return '<div class="sx-card sx-kpi"><div class="l">' + k[0] + '</div><div class="v">' + k[1] + '<small>' + k[2] + '</small></div>' + k[3] + '</div>'; }).join('');
   }
@@ -540,7 +540,8 @@
     root.innerHTML = '<div class="sx-in"><div class="sx-top"><button type="button" class="sx-back" id="sxBack">← ภาพรวม</button><h1>ยอดขายน้ำมัน</h1><span class="by" id="sxBy"></span></div>' +
       '<div class="sx-card sx-fil" id="sxFil"></div><div class="sx-kpis" id="sxK"></div>' +
       '<div class="sx-grid g2" id="r1"></div><div class="sx-grid g3" id="r2"></div><div class="sx-grid g4" id="r3"></div>' +
-      '<div class="sx-note" style="text-align:center;background:none">เกณฑ์ขนาดรถ: ≤4 ลิตร เล็ก · >4–80 ลิตร กลาง · >80 ลิตร ใหญ่ · 1 รายการ = 1 คัน (รายงานลูกค้าทั่วไป)</div></div>';
+      '<div class="sx-note" style="text-align:center;background:none">เกณฑ์ขนาดรถ: ≤4 ลิตร เล็ก · >4–80 ลิตร กลาง · >80 ลิตร ใหญ่ · 1 รายการ = 1 คัน (รายงานลูกค้าทั่วไป) · รายการ “เปลี่ยนแปลงการชำระ” ที่ซ้ำนับเป็น 1 รายการ</div>' +
+      '<div class="sx-note" style="text-align:center;background:none;margin-top:2px">* ลิตรจาก POS สูงกว่ายอดมิเตอร์ของ ปตท. ราว 1% เนื่องจาก POS คำนวณลิตรจากยอดเงิน ส่วนมิเตอร์วัดน้ำมันที่จ่ายจริง</div></div>';
     pageCards = [];
     var place = { r1: ['area', 'wk'], r2: ['tk', 'tkw', 'pie'], r3: ['tbl', 'sz', 'hr'] };
     Object.keys(place).forEach(function (r) { place[r].forEach(function (id) { var c = mkCard(id, function () { return G; }, false); pageCards.push(c); root.querySelector('#' + r).appendChild(c.el); }); });
