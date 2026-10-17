@@ -314,6 +314,7 @@ button{font-family:inherit;color:inherit}
 <script src="config.js"></script>
 <script src="sales.js"></script>
 <script src="amz.js"></script>
+<script src="mingkwan.js"></script>
 <script>
 (function(){
 'use strict';
@@ -943,6 +944,7 @@ makeSign(2.1,1.6,170,dHead,HWX,14.45,PYZ+.32);
 makeSign(1.9,.95,220,dAmzTile,HWX,12.55,PYZ+.27);
 makeSign(1.9,.95,220,dSevTile,HWX,11.0,PYZ+.27);
 var priceSign=makeSign(3.1,7.7,190,dPrices,PYX,8.2,PYZ+.99);
+window.getFuelPrices=function(){return PRICES};
 window.setFuelPrices=function(o){for(var k in o){if(PRICES.hasOwnProperty(k))PRICES[k]=Number(o[k])}priceSign.paint()};
 if(LIVE.prices)window.setFuelPrices(LIVE.prices);
 function repaintSigns(){signs.forEach(function(s){s.paint()})}
