@@ -374,6 +374,6 @@
       var hide = !!window.SX_OPEN; mkEl.style.display = hide ? 'none' : ''; cpEl.style.display = hide ? 'none' : '';
     }, 300);
   }
-  window.Mingkwan = { ask: function (q) { return load().then(function () { return answer(q); }); }, open: open, close: close };
+  window.Mingkwan = { data: function () { return load().then(function () { return { FD: FD, AD: AD, SAMPLE: SAMPLE }; }); }, ask: function (q) { return load().then(function () { return answer(q); }); }, open: open, close: close };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build); else build();
 })();
