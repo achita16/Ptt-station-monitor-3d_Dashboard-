@@ -163,8 +163,12 @@
     '#wxp .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#5b6b85;margin:2px 0 0 2px}#wxp .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}' +
     '#wxp .ins{background:#f2f7ff;border:1px solid #d6e6fb;border-radius:12px;padding:9px 12px;font-size:12.5px;line-height:1.55;margin:8px 0}#wxp .ins b{color:#0b4bb3}' +
     '#wxp .ft{font-size:10.8px;color:#8593a9;margin-top:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}' +
+    '#wxp .nav .dpb{width:auto;height:auto;white-space:nowrap;border:1.5px solid #1e78e6;background:#fff;color:#0b4bb3;font:inherit;font-weight:700;font-size:13.5px;border-radius:16px;padding:5px 14px;cursor:pointer}' +
+    '#wxp .cal{background:#f7faff;border:1px solid #d6e6fb;border-radius:14px;padding:10px;margin-bottom:10px}#wxp .ch2{display:flex;align-items:center;gap:8px;margin-bottom:8px}#wxp .ch2 b{font-size:13.5px}#wxp .ch2 button{width:28px;height:28px;border-radius:50%;border:0;background:#eef3fa;font-size:16px;cursor:pointer}#wxp .ch2 button:disabled{opacity:.35}#wxp .ch2 .tdb{margin-left:auto;width:auto;border-radius:14px;padding:0 10px;background:#fff;border:1px solid #bcd6f7;color:#1e78e6;font-size:12px}' +
+    '#wxp .cg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}#wxp .hh{text-align:center;font-size:11px;color:#6b7a93}#wxp .m{text-align:center;background:#fff;border-radius:11px;padding:3px 0 2px;border:1.5px solid transparent;height:44px;font:inherit;cursor:pointer;color:#17233a}#wxp .m b{display:block;font-size:12px}#wxp .m i{display:block;font-style:normal;font-size:18px;line-height:1.2}#wxp .m.off{opacity:.3;background:none;cursor:default}#wxp .m.sel{background:#1e78e6;color:#fff}#wxp .e{height:44px}#wxp .m:hover:not(.off){border-color:#1e78e6}' +
+    '#wxp .lg{display:flex;gap:9px;flex-wrap:wrap;font-size:10.5px;color:#5b6b85;margin-top:8px}' +
     '.wx{cursor:pointer;border-radius:14px;padding:2px 6px;transition:background .15s}.wx:hover{background:rgba(255,255,255,.6)}.wx .wxi{font-size:28px;line-height:1;width:38px;text-align:center}';
-  var P, S = { d: 0, kind: 'amz' }, MINDAY = 0;
+  var P, S = { d: 0, kind: 'amz', cal: false, ym: 0 }, MINDAY = 0;
 
   function paintHeader() {
     var el = document.querySelector('.wx'); if (!el) return;
@@ -184,8 +188,9 @@
     var d = S.d, date = iso(d), t = today(), dl = W.D[date], sk = skyDay(date), mx = t;
     var A = dayAmz(d), F = dayFuel(d);
     var html = '<div class="nav"><button type="button" id="wxPrev" aria-label="วันก่อนหน้า"' + (d <= MINDAY ? ' disabled' : '') + '>‹</button>' +
-      '<label>📅 ' + sd(d) + '<input type="date" id="wxDate" value="' + date + '" min="' + iso(MINDAY) + '" max="' + iso(mx) + '"></label>' +
+      '<button type="button" class="dpb" id="wxCal">📅 ' + sd(d) + (S.cal ? ' ▴' : ' ▾') + '</button>' +
       '<button type="button" id="wxNext" aria-label="วันถัดไป"' + (d >= mx ? ' disabled' : '') + '>›</button><button type="button" class="td" id="wxToday">วันนี้</button></div>';
+    if (S.cal) html += calHtml();
     // สภาพอากาศของวัน
     if (dl && sk) {
       html += '<div class="wxday"><div class="e">' + sk.ic + '</div><div class="t"><b>' + sk.label + '</b><small>' + rainWin(date) + '</small></div><div class="k">' +
@@ -208,7 +213,12 @@
     P.querySelector('#wxPrev').onclick = function () { go(S.d - 1); };
     P.querySelector('#wxNext').onclick = function () { go(S.d + 1); };
     P.querySelector('#wxToday').onclick = function () { go(today()); };
-    P.querySelector('#wxDate').onchange = function (e) { if (e.target.value) go(di(e.target.value)); };
+    P.querySelector('#wxCal').onclick = function () { S.cal = !S.cal; S.ym = monthOf(S.d); paintBody(); };
+    var cl = P.querySelector('.cal'); if (cl) {
+      cl.querySelector('.pm').onclick = function () { S.ym--; paintBody(); }; cl.querySelector('.nm').onclick = function () { S.ym++; paintBody(); };
+      cl.querySelector('.tdb').onclick = function () { S.cal = false; go(today()); };
+      cl.querySelectorAll('.m[data-d]').forEach(function (b) { b.onclick = function () { S.cal = false; go(+b.dataset.d); }; });
+    }
     P.querySelectorAll('#wxKind button').forEach(function (b) { b.onclick = function () { S.kind = b.dataset.k; paintBody(); }; });
   }
   function hourly(d, date) {
@@ -241,6 +251,21 @@
     }
     var warn = ref.length && ref.length < 4 ? ' <small style="color:#9a6a00">· เทียบจากแค่ ' + ref.length + ' วัน ผลอาจคลาดเคลื่อน</small>' : '';
     return strip + '<div class="ch">' + svg + '</div>' + xl + '<div class="legend"><span><i style="background:#f08a1c"></i>วันที่เลือก</span><span><i style="background:#31415f"></i>ค่าเฉลี่ยวัน' + WD[wdOf(d)] + 'ทั่วไป' + (ref.length ? ' (' + ref.length + ' วัน)' : '') + '</span><span><i style="background:#9fcaf7"></i>ชั่วโมงที่ฝนตก</span></div><div class="ins">💡 ' + ins + warn + '</div>';
+  }
+
+  var MFULL = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  function monthOf(d) { var x = new Date(d * 864e5); return x.getUTCFullYear() * 12 + x.getUTCMonth(); }
+  function calHtml() {
+    var y = Math.floor(S.ym / 12), m = S.ym % 12, first = Math.floor(Date.UTC(y, m, 1) / 864e5), nd = Math.floor(Date.UTC(y, m + 1, 1) / 864e5) - first, t = today();
+    var h = '<div class="cal"><div class="ch2"><button type="button" class="pm"' + (S.ym <= monthOf(MINDAY) ? ' disabled' : '') + '>‹</button><b>' + MFULL[m] + ' ' + (y + 543) + '</b><button type="button" class="nm"' + (S.ym >= monthOf(t) ? ' disabled' : '') + '>›</button><button type="button" class="tdb">วันนี้</button></div><div class="cg">';
+    ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'].forEach(function (w) { h += '<div class="hh">' + w + '</div>'; });
+    for (var i = 0; i < wdOf(first); i++) h += '<div class="e"></div>';
+    for (var k = 0; k < nd; k++) {
+      var d = first + k, sk = skyDay(iso(d)), off = d > t || d < MINDAY;
+      if (off) h += '<div class="m off"><b>' + (k + 1) + '</b></div>';
+      else h += '<button type="button" class="m' + (d === S.d ? ' sel' : '') + '" data-d="' + d + '" title="' + (sk ? sk.label : 'ไม่มีข้อมูลอากาศ') + '"><b>' + (k + 1) + '</b><i>' + (sk ? sk.ic : '–') + '</i></button>';
+    }
+    return h + '</div><div class="lg"><span>☀️ แดดจัด</span><span>⛅ เมฆบางส่วน</span><span>☁️ เมฆครึ้ม</span><span>🌦 ฝนเล็กน้อย</span><span>🌧 ฝนหนัก</span><span>⛈ พายุ</span></div></div>';
   }
   function go(d) { var t = today(); S.d = Math.max(MINDAY, Math.min(t, d)); paintBody(); }
 
