@@ -86,7 +86,15 @@ button{font-family:inherit;color:inherit}
 .tile .d{display:block;font:500 12px/1.2 var(--f-display);color:var(--ink-2);padding-top:2px}
 .tile .s{display:block;font:400 9px/1 var(--f-display);color:#8ba0bb;padding:1px 0 6px;letter-spacing:.04em}
 .tile.warn{border-color:var(--bad);box-shadow:0 0 0 2px rgba(226,58,53,.22)}
-.sc{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;align-content:start}
+.sc{display:flex;flex-direction:column;gap:0;padding-top:12px}
+.sc .sh{display:flex;align-items:center;gap:10px;margin-bottom:8px}.sc .sh .ci.logo{width:38px;height:38px;border-radius:12px;padding:4px;flex:none}
+.sc .sn{min-width:0}.sc .sn h2{margin:0;font:600 17px/1.2 var(--f-display);white-space:nowrap}.sc .sn .dt{margin:1px 0 0;font:400 12px/1.2 var(--f-display);color:var(--ink-2);white-space:nowrap}
+.sc .sh .dl{margin-left:auto;font:700 13px/1.15 var(--f-display);padding:4px 10px;border-radius:12px;background:#e4f6ec}.sc .sh .dl.dn{background:#fde7e6}.sc .sh .dl small{display:none}.sc .sh .dl:not(.up):not(.dn){background:#eef2f7;color:var(--ink-2)}
+.sc .rows{border-top:1px solid var(--line)}.sc .r{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 2px;border-bottom:1px solid var(--line)}
+.sc .k{font:400 13px/1.3 var(--f-display);color:var(--ink-2)}.sc .r .num{font:700 clamp(17px,1.5vw,20px)/1.2 var(--f-display)}.sc .r .num small,.sc .tot .num small:empty{display:none}
+.sc .tot{display:flex;align-items:baseline;gap:8px;margin-top:8px;padding:8px 12px;border-radius:12px;background:#f1f6fd}.sc .tot .k{font-weight:600;color:var(--ink)}
+.sc .tot .num{margin-left:auto;font:700 clamp(22px,2vw,27px)/1.2 var(--f-display);color:#0b4bb3}.sc .tot .num small{font:500 12px var(--f-display);margin-left:5px;color:var(--ink)}
+.sc.sa .tot{background:#eaf7e6}.sc.sa .tot .num{color:#14712f}.sc.ss .tot{background:#fdeee9}.sc.ss .tot .num{color:#c2431f}
 .sc .ci.round{border-radius:50%}
 .sc .nums{grid-column:1/-1;display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
 .num{display:block;font:600 clamp(18px,5vw,23px)/1.2 var(--f-display)}
@@ -275,20 +283,20 @@ button{font-family:inherit;color:inherit}
           <div class="tile" data-fuel="Diesel"><span class="h" style="background:var(--dsl)">Diesel</span><span class="v">52,800</span><span class="d">16.8 วัน</span><span class="s">Stock Day</span></div>
         </div>
       </article>
-      <article class="card sc" data-sale="fuel">
-        <span class="ci logo"><img src="pttm.png" alt="PTT"></span>
-        <div class="ch"><div><h2>ยอดขายวันนี้</h2><p>น้ำมัน (ลิตร / คัน / บาท)</p></div></div>
-        <div class="nums"><div><span class="num" data-f="qty">18,742<small>ลิตร</small></span><span class="num" data-f="cars">748<small>คัน</small></span><span class="num" data-f="baht">612,380<small>บาท</small></span></div><div class="dl up">▲ +5.8%<small>จากเมื่อวาน</small></div></div>
+      <article class="card sc sf" data-sale="fuel">
+        <div class="sh"><span class="ci logo"><img src="pttm.png" alt="PTT"></span><div class="sn"><h2>น้ำมัน</h2><p class="dt">&nbsp;</p></div><div class="dl up">▲ +5.8%<small>จากเมื่อวาน</small></div></div>
+        <div class="rows"><div class="r"><span class="k">จำนวนรถ (คัน)</span><span class="num" data-f="cars">748<small></small></span></div><div class="r"><span class="k">ยอดขาย (บาท)</span><span class="num" data-f="baht">612,380<small></small></span></div></div>
+        <div class="tot"><span class="k">ปริมาณ (ลิตร)</span><span class="num" data-f="qty">18,742<small>ลิตร</small></span></div>
       </article>
-      <article class="card sc" data-sale="amazon">
-        <span class="ci logo"><img src="amz.png" alt="Café Amazon"></span>
-        <div class="ch"><div><h2>ยอดขาย Amazon</h2></div></div>
-        <div class="nums"><div><span class="num" data-f="qty">412<small>แก้ว</small></span><span class="num" data-f="baht">31,850<small>บาท</small></span></div><div class="dl up">▲ +3.2%<small>จากเมื่อวาน</small></div></div>
+      <article class="card sc sa" data-sale="amazon">
+        <div class="sh"><span class="ci logo"><img src="amz.png" alt="Café Amazon"></span><div class="sn"><h2>Amazon</h2><p class="dt">&nbsp;</p></div><div class="dl up">▲ +3.2%<small>จากเมื่อวาน</small></div></div>
+        <div class="rows"><div class="r"><span class="k">จำนวนลูกค้า (คน)</span><span class="num" data-f="cust" data-x="x">–<small></small></span></div><div class="r"><span class="k">ยอดขาย (บาท)</span><span class="num" data-f="baht">31,850<small></small></span></div></div>
+        <div class="tot"><span class="k">จำนวนแก้ว</span><span class="num" data-f="qty">412<small>แก้ว</small></span></div>
       </article>
-      <article class="card sc" data-sale="seven">
-        <span class="ci logo"><img src="sev7.png" alt="7-Eleven"></span>
-        <div class="ch"><div><h2>ยอดขาย 7-Eleven</h2></div></div>
-        <div class="nums"><div><span class="num" data-f="qty">1,086<small>คน</small></span><span class="num" data-f="baht">214,700<small>บาท</small></span></div><div class="dl dn">▼ -2.3%<small>จากเมื่อวาน</small></div></div>
+      <article class="card sc ss" data-sale="seven">
+        <div class="sh"><span class="ci logo"><img src="sev7.png" alt="7-Eleven"></span><div class="sn"><h2>7-Eleven</h2><p class="dt">&nbsp;</p></div><div class="dl dn">▼ 2.3%<small>จากเมื่อวาน</small></div></div>
+        <div class="rows"><div class="r"><span class="k">จำนวนลูกค้า (คน)</span><span class="num" data-f="qty">1,086<small></small></span></div><div class="r"><span class="k">เฉลี่ยต่อคน (บาท)</span><span class="num" data-f="avg" data-x="x">198<small></small></span></div></div>
+        <div class="tot"><span class="k">ยอดขายรวม</span><span class="num" data-f="baht">214,700<small>บาท</small></span></div>
       </article>
     </section>
   </div>
@@ -401,6 +409,19 @@ $('#seg').addEventListener('click',function(e){
 
 
 /* ---------- Google Sheet data layer ---------- */
+
+function fillExtra(key){
+  var sv=document.querySelector('.card.sc[data-sale="seven"]');
+  if(sv){var q=sv.querySelector('[data-f="qty"]'),b=sv.querySelector('[data-f="baht"]'),av=sv.querySelector('[data-f="avg"]');
+    var Q=Number(String(q.firstChild.nodeValue).replace(/,/g,'')),B=Number(String(b.firstChild.nodeValue).replace(/,/g,''));
+    if(av)av.firstChild.nodeValue=(Q>0&&isFinite(B))?fmt(Math.round(B/Q)):'-'}
+  var am=document.querySelector('.card.sc[data-sale="amazon"] [data-f="cust"]');
+  if(am&&window.Mingkwan&&window.Mingkwan.data)window.Mingkwan.data().then(function(x){
+    var A=x&&x.AD,d=null;if(!A||!A.ok)return;
+    if(key&&/^\d{4}-\d\d-\d\d$/.test(key)){var p=key.split('-');d=Math.floor(Date.UTC(+p[0],+p[1]-1,+p[2])/864e5)}else d=A.LAST;
+    var r=A.DAY[d];am.firstChild.nodeValue=r?fmt(r.b):'-'}).catch(function(){});
+}
+window.addEventListener('load',function(){if(!(window.STATION_CONFIG&&window.STATION_CONFIG.API_URL))Array.prototype.forEach.call(document.querySelectorAll('.card.sc .dt'),function(e){e.textContent='ข้อมูลตัวอย่าง'});fillExtra()});
 var CUR='today',DATA_PERIODS=null,LIVE={pinRows:{},updated:''};
 var LIVEKEY={fuel:'fuel',amz:'amazon',cvs:'seven'};
 var CFG=window.STATION_CONFIG||{};
@@ -443,7 +464,8 @@ function applyData(d,fromCache){
     var dl=c.querySelector('.dl');dl.className='dl '+(v>=0?'up':'dn');
     dl.innerHTML=(v>=0?'▲ +':'▼ ')+v.toFixed(1)+'%<small>จากวันก่อนหน้า</small>';
   });
-  var h2=document.querySelector('.card.sc[data-sale="fuel"] h2');if(h2&&dd)h2.textContent='ยอดขาย '+dd;
+  Array.prototype.forEach.call(document.querySelectorAll('.card.sc .dt'),function(e){e.textContent=dd||'\u00a0'});
+  fillExtra(d.latestDate);
   var T=P.today||{};
   if(T.amazon)LIVE.pinRows.cafe=[['ยอดวันที่ '+dd,fmt(T.amazon.qty)+' แก้ว'],['รายได้',fmt(T.amazon.baht)+' บาท'],['เทียบวันก่อนหน้า',Number(T.amazon.delta).toFixed(1)+'%']];
   if(T.seven)LIVE.pinRows.cvs=[['จำนวนคน '+dd,fmt(T.seven.qty)+' คน'],['ยอดขาย',fmt(T.seven.baht)+' บาท'],['เทียบวันก่อนหน้า',Number(T.seven.delta).toFixed(1)+'%']];
