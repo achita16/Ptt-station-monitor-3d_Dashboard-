@@ -74,7 +74,14 @@
     FIRST = DIS[0] || 0; LATEST = DIS.length ? DIS[DIS.length - 1] : 0;
     READY = DIS.length > 0;
   }
-  function prevOf(st) { var len = st.to - st.from + 1; return { from: st.from - len, to: st.from - 1 }; }
+function shiftM_(d) { var x = new Date(d * 864e5), y = x.getUTCFullYear(), m = x.getUTCMonth() - 1, dd = x.getUTCDate(); if (m < 0) { m = 11; y--; } var dim = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); return Math.floor(Date.UTC(y, m, Math.min(dd, dim)) / 864e5); }
+  function prevOf(st) {
+    var len = st.to - st.from + 1, cm = st.cm || 'prev';
+    if (cm === 'week') return { from: st.from - 7, to: st.from - 7 + len - 1 };
+    if (cm === 'month') { var f = shiftM_(st.from); return { from: f, to: f + len - 1 }; }
+    if (cm === 'custom' && st.cf) return { from: st.cf, to: st.cf + len - 1 };
+    return { from: st.from - len, to: st.from - 1 };
+  }
   function haveData(a, b) { for (var d = a; d <= b; d++) if (DAY[d]) return true; return false; }
   function daysIn(a, b, test) { var c = 0; for (var d = a; d <= b; d++) if (DAY[d] && (!test || test(d))) c++; return c; }
   function totDay(a, b, f) { var t = 0; for (var d = a; d <= b; d++) if (DAY[d]) t += DAY[d][f]; return t; }
@@ -102,8 +109,8 @@
   function sumM(M) { var q = 0, v = 0; for (var k in M) { q += M[k][0]; v += M[k][1]; } return [q, v]; }
 
   /* ---------- state ---------- */
-  var G = { from: 0, to: 0, cmp: true, pre: '30' };
-  function clone(s) { return { from: s.from, to: s.to, cmp: s.cmp, pre: s.pre }; }
+  var G = { from: 0, to: 0, cmp: true, cm: 'prev', cf: 0, pre: '30' };
+  function clone(s) { return { from: s.from, to: s.to, cmp: s.cmp, cm: s.cm, cf: s.cf, pre: s.pre }; }
   function setPre(st, p) {
     st.pre = p;
     if (p === 'all') { st.from = FIRST; st.to = LATEST; }
@@ -386,6 +393,30 @@
       };
     }
   };
+
+  // 5.5) สัดส่วนเบเกอรี่ เทียบยอดทั้งร้าน (โดนัท)
+  C.bkp = {
+    title: 'สัดส่วนเบเกอรี่ เทียบทั้งร้าน', sub: 'ยอดขายจากรายการสินค้า', opts: [], def: {}, accent: '#f08a1c',
+    render: function (st, o, W, H, big) {
+      var tt = function (a, b) { var all = catAgg(a, b), T = 0, B = 0, c; for (c in all) { T += all[c][1]; if (isBakery(CATS[c])) B += all[c][1]; } return [T, B]; };
+      var x = tt(st.from, st.to), T = x[0], B = x[1];
+      if (!T) return { html: noData('ยังไม่มีข้อมูลรายการสินค้าในช่วงนี้') };
+      var pv = prevOf(st), up = st.cmp && haveData(pv.from, pv.to), y = up ? tt(pv.from, pv.to) : [0, 0], pp = y[0] ? y[1] / y[0] * 100 : null, p = B / T * 100;
+      var R = 86, r2 = 54, cx = 96, cy = 96, A = 2 * Math.PI * B / T, P = function (rr, t) { return [(cx + rr * Math.sin(t)).toFixed(1), (cy - rr * Math.cos(t)).toFixed(1)]; };
+      var arc = function (a0, a1, col, nm, v) { var lg = a1 - a0 > Math.PI ? 1 : 0; return '<path d="M' + P(R, a0) + 'A' + R + ',' + R + ' 0 ' + lg + ' 1 ' + P(R, a1) + 'L' + P(r2, a1) + 'A' + r2 + ',' + r2 + ' 0 ' + lg + ' 0 ' + P(r2, a0) + 'Z" fill="' + col + '"' + tip('<b>' + nm + '</b><br>' + n(v) + ' บาท · ' + (v / T * 100).toFixed(1) + '%') + '/>'; };
+      var svg = '<svg style="width:128px;height:128px" viewBox="0 0 192 192">' + (B >= T ? '<circle cx="96" cy="96" r="70" fill="none" stroke="#f08a1c" stroke-width="32"/>' : B <= 0 ? '<circle cx="96" cy="96" r="70" fill="none" stroke="#cfdcf0" stroke-width="32"/>' : arc(0, A, '#f08a1c', 'เบเกอรี่', B) + arc(A, 2 * Math.PI - 0.0001, '#cfdcf0', 'เครื่องดื่มและอื่นๆ', T - B)) +
+        '<text x="96" y="94" text-anchor="middle" font-size="28" font-weight="700" fill="#17233a">' + p.toFixed(1) + '%</text><text x="96" y="114" text-anchor="middle" font-size="12" fill="#5b6b85">เบเกอรี่</text></svg>';
+      var S = {}, TQ = 0; SUPS.forEach(function (s) { S[s] = [0, 0]; });
+      var R2 = menuAgg(st.from, st.to, function (m) { return m.bk; }); for (var k in R2) { var m = MENU[k]; if (S[m.sup]) { S[m.sup][0] += R2[k][0]; S[m.sup][1] += R2[k][1]; } }
+      var ord = SUPS.slice().sort(function (a, b) { return S[b][1] - S[a][1]; }).filter(function (s) { return S[s][1] > 0; });
+      var dl = pp === null ? '' : '<span class="' + (p - pp >= 0 ? 'up' : 'dn') + '" style="font-weight:700">' + (p - pp >= 0 ? '▲ +' : '▼ ') + (p - pp).toFixed(1) + ' จุด</span> <small style="color:#8593a9">เทียบช่วงเปรียบเทียบ (' + pp.toFixed(1) + '%)</small>';
+      return { html: '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-right:6px"><div class="sx-piewrap">' + svg + '</div><div style="flex:1;min-width:220px;max-width:100%">' +
+        '<div class="ax-tot" style="white-space:normal">เบเกอรี่ <b>' + n(B) + '</b> บาท จากทั้งร้าน <b>' + n(T) + '</b> บาท<br>' + dl + '</div>' +
+        '<div class="ax-li"><i class="sx-dot" style="background:#f08a1c"></i><span style="min-width:0">เบเกอรี่ ' + p.toFixed(1) + '%</span><b>' + n(B) + ' ฿</b></div><div class="ax-li"><i class="sx-dot" style="background:#cfdcf0"></i><span style="min-width:0">เครื่องดื่ม/อื่นๆ ' + (100 - p).toFixed(1) + '%</span><b style="white-space:nowrap">' + n(T - B) + ' ฿</b></div>' +
+        (ord.length ? '<div style="margin-top:8px;font-size:12px;font-weight:700;color:#5b6b85">แยกตามผู้ผลิต (Supplier)</div>' + ord.map(function (s) { return '<div class="ax-li"><i class="sx-dot" style="background:' + (SUPC[s] || '#94a3b8') + '"></i><span>' + s + '</span><b>' + n(S[s][1]) + ' ฿</b><small style="color:#8593a9;margin-left:6px">' + (B ? (S[s][1] / B * 100).toFixed(0) : 0) + '%</small></div>'; }).join('') : '') +
+        '</div></div>' };
+    }
+  };
   for (var bi = 0; bi < 5; bi++) (function (bi) {
     var id = 'bk' + bi;
     C[id] = {
@@ -413,21 +444,30 @@
   function chipRow(items, cur, attr, extra) {
     return items.map(function (i) { return '<button type="button" class="sx-chip ' + (extra || '') + '" ' + attr + '="' + i[0] + '" aria-pressed="' + (String(cur) === String(i[0])) + '">' + i[1] + '</button>'; }).join('');
   }
+
+  var CMODES = [['prev', 'ช่วงก่อนหน้า'], ['month', 'เดือนก่อน (วันเดียวกัน)'], ['week', 'สัปดาห์ก่อน'], ['custom', 'กำหนดเอง']];
+  function cmpRow(st) {
+    var p = prevOf(st);
+    return '<div class="sx-g">เปรียบเทียบกับ <button type="button" class="sx-tog" data-cmp aria-pressed="' + st.cmp + '" aria-label="เปิด/ปิดการเปรียบเทียบ"></button>' +
+      (st.cmp ? chipRow(CMODES, st.cm || 'prev', 'data-cm', 'sm') + ((st.cm === 'custom') ? ' เริ่มวันที่ <input type="date" class="sx-date" data-cf min="' + iso(FIRST) + '" max="' + iso(LATEST) + '" value="' + iso(st.cf || p.from) + '">' : '') : '') + '</div>' +
+      (st.cmp ? '<div class="sx-g sx-cmpsum">ช่วงที่เลือก <b>' + th(st.from) + ' – ' + th(st.to) + '</b> เทียบกับ <b>' + th(p.from) + ' – ' + th(p.to) + '</b>' + (haveData(p.from, p.to) ? '' : ' <span style="color:#c0392b">(ไม่มีข้อมูลช่วงนี้)</span>') + '</div>' : '');
+  }
   function prevLbl(st) { var p = prevOf(st); return haveData(p.from, p.to) ? th(p.from) + ' – ' + th(p.to) : 'ไม่มีข้อมูลช่วงก่อนหน้า'; }
   function filterBar(st) {
     var pres = [['7', '7 วัน'], ['30', '30 วัน'], ['90', '90 วัน'], ['all', 'ทั้งหมด']];
     return '<div class="sx-g">ช่วงเวลา ' + chipRow(pres, st.pre, 'data-pre') + '</div>' +
       '<div class="sx-g">กำหนดเอง <input type="date" class="sx-date" data-from min="' + iso(FIRST) + '" max="' + iso(LATEST) + '" value="' + iso(st.from) + '"> → <input type="date" class="sx-date" data-to min="' + iso(FIRST) + '" max="' + iso(LATEST) + '" value="' + iso(st.to) + '"></div>' +
-      '<div class="sx-g">เทียบช่วงก่อนหน้า <button type="button" class="sx-tog" data-cmp aria-pressed="' + st.cmp + '" aria-label="เทียบช่วงก่อนหน้า"></button><span>' + prevLbl(st) + '</span></div>';
+      cmpRow(st);
   }
   function bindFilters(host, st, onChange) {
     host.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b || !host.contains(b)) return;
       if (b.dataset.pre) { setPre(st, b.dataset.pre); onChange(); }
+      else if (b.dataset.cm) { st.cm = b.dataset.cm; if (st.cm === 'custom' && !st.cf) st.cf = prevOf(st).from; onChange(true); }
       else if (b.hasAttribute('data-cmp')) { st.cmp = !st.cmp; onChange(); }
     });
     host.addEventListener('change', function (e) {
-      var t = e.target; if (!t.classList.contains('sx-date')) return;
+      var t = e.target; if (t.hasAttribute && t.hasAttribute('data-cf')) { if (t.value) { st.cf = Math.min(LATEST, Math.max(FIRST, di(t.value))); onChange(true); } return; } if (!t.classList.contains('sx-date')) return;
       var a = t.hasAttribute('data-from') ? 'from' : 'to', v = t.value; if (!v) return;
       st[a] = Math.min(LATEST, Math.max(FIRST, di(v)));
       if (st.from > st.to) { if (a === 'from') st.to = st.from; else st.from = st.to; }
@@ -485,10 +525,15 @@
     var nd = daysIn(st.from, st.to), pnd = up ? daysIn(pv.from, pv.to) : 0;
     var A = function (f) { return totDay(st.from, st.to, f); }, P = function (f) { return up ? totDay(pv.from, pv.to, f) : 0; };
     var net = A('n'), cu = A('b'), cp = A('cup');
+    var ndc = daysIn(st.from, st.to, function (d) { return RD[d]; }), pndc = up ? daysIn(pv.from, pv.to, function (d) { return RD[d]; }) : 0;
     var D = function (a, b) { return up && b ? dtag(dlt(a, b)) : '<div class="sx-d">&nbsp;</div>'; };
-    var K = [['ยอดขายรวม', n(net), 'บาท', D(net, P('n'))], ['จำนวนลูกค้า (1 บิล = 1 คน)', n(cu), 'คน', D(cu, P('b'))], ['จำนวนแก้ว', n(cp), 'แก้ว', D(cp, P('cup'))],
-      ['ยอดต่อคน', cu ? n(net / cu) : '–', 'บาท/คน', D(cu ? net / cu : 0, P('b') ? P('n') / P('b') : 0)], ['ลูกค้าเฉลี่ยต่อวัน', nd ? n(cu / nd) : '–', 'คน/วัน', D(nd ? cu / nd : 0, pnd ? P('b') / pnd : 0)]];
-    return K.map(function (k, i) { return '<div class="sx-card sx-kpi ax-k' + i + '"><div class="l">' + k[0] + '</div><div class="v">' + k[1] + '<small>' + k[2] + '</small></div>' + k[3] + '</div>'; }).join('');
+    var K = [['ยอดขายรวม', n(net), 'บาท', D(net, P('n')), ''],
+      ['แก้วเฉลี่ย / วัน', ndc ? n(cp / ndc) : '–', 'แก้ว/วัน', D(ndc ? cp / ndc : 0, pndc ? P('cup') / pndc : 0), ndc ? n(cp) + ' ÷ ' + ndc + ' วัน' + (ndc < nd ? ' (วันที่มีรายการสินค้า)' : '') : 'ยังไม่มีข้อมูลรายการสินค้า'],
+      ['จำนวนแก้ว', n(cp), 'แก้ว', D(cp, P('cup')), ''],
+      ['จำนวนลูกค้า (1 บิล = 1 คน)', n(cu), 'คน', D(cu, P('b')), ''],
+      ['ลูกค้าเฉลี่ย / วัน', nd ? n(cu / nd) : '–', 'คน/วัน', D(nd ? cu / nd : 0, pnd ? P('b') / pnd : 0), nd ? n(cu) + ' ÷ ' + nd + ' วัน' : ''],
+      ['ยอดต่อคน', cu ? n(net / cu) : '–', 'บาท/คน', D(cu ? net / cu : 0, P('b') ? P('n') / P('b') : 0), '']];
+    return K.map(function (k, i) { return '<div class="sx-card sx-kpi ax-k' + i + '"><div class="l">' + k[0] + '</div><div class="v">' + k[1] + '<small>' + k[2] + '</small></div>' + k[3] + (k[4] ? '<div class="sx-sub">' + k[4] + '</div>' : '') + '</div>'; }).join('');
   }
 
   var root, tipEl, modal = null, pageCards = [];
@@ -500,7 +545,7 @@
       '<div class="ax-sec">เบเกอรี่ &amp; ขนม<small>แยกตามหมวดและ Supplier · ตามช่วงที่เลือก</small></div><div class="sx-grid g3e" id="a3"></div>' +
       '<div class="sx-note" style="text-align:center;background:none">นับเฉพาะบิลที่ไม่ void · 1 บิล = 1 คน · จำนวนแก้ว นับเฉพาะหมวด Juice &amp; Smoothies, NPD, กาแฟ, ชา, ช็อกโกแลต, นม · Supplier ดูจากท้ายชื่อเมนู: PAT = Patra, BAAN = Ban Bakery, AMZ = Bakery Factory</div></div>';
     pageCards = [];
-    var place = { a1: ['area', 'wk'], a2: ['hr', 'cat', 'top'], a3: ['sup', 'bk0', 'bk1', 'bk2', 'bk3', 'bk4'] };
+    var place = { a1: ['area', 'wk'], a2: ['hr', 'cat', 'top'], a3: ['bkp', 'sup', 'bk0', 'bk1', 'bk2', 'bk3', 'bk4'] };
     Object.keys(place).forEach(function (r) { place[r].forEach(function (id) { var c = mkCard(id, function () { return G; }, false); pageCards.push(c); root.querySelector('#' + r).appendChild(c.el); }); });
     root.querySelector('#axBack').onclick = close;
     bindFilters(root.querySelector('#axFil'), G, refresh);
@@ -567,7 +612,7 @@
     '#ax .sx-chip[aria-pressed=true]{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-color:#6366f1}#ax .sx-tog[aria-pressed=true]{background:#6366f1}' +
     '' +
     '.g3e{grid-template-columns:repeat(3,minmax(0,1fr))}#ax .ax-acc{border-top-width:4px}' +
-    '#ax .ax-k0{border-top:4px solid #ff7a4a}#ax .ax-k1{border-top:4px solid #6366f1}#ax .ax-k2{border-top:4px solid #f59e0b}#ax .ax-k3{border-top:4px solid #ec4899}#ax .ax-k4{border-top:4px solid #14b8a6}' +
+    '#ax .ax-k0{border-top:4px solid #ff7a4a}#ax .ax-k1{border-top:4px solid #16a05a}#ax .ax-k2{border-top:4px solid #f59e0b}#ax .ax-k3{border-top:4px solid #6366f1}#ax .ax-k4{border-top:4px solid #14b8a6}#ax .ax-k5{border-top:4px solid #ec4899}' +
     '.ax-sec{font:700 17px var(--f-display,inherit);margin:6px 2px 10px;color:#17233a}.ax-sec small{font:400 12.5px var(--f-body,inherit);color:#6a7a94;margin-left:8px}' +
     '.ax-more{display:block;width:100%;margin-top:10px;text-align:center;font:700 12.5px var(--f-body,inherit);color:#0f9a88;background:#14b8a61a;border:0;border-radius:10px;padding:8px;cursor:pointer}' +
     '.ax-li{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:2.5px 0}.ax-li span{flex:1}.ax-li b{width:48px;text-align:right}' +

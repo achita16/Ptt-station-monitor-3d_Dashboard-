@@ -58,15 +58,22 @@
   }
   function fv(d, f, unit, s) { var r = DAY[d] && DAY[d][f]; return r ? val(r, unit, s) : 0; }
   function sv(d, fsel, unit, s) { var t = 0; for (var f = 0; f < 4; f++) if (fsel[f]) t += fv(d, f, unit, s); return t; }
-  function prevOf(st) { var len = st.to - st.from + 1; return { from: st.from - len, to: st.from - 1 }; }
+function shiftM_(d) { var x = new Date(d * 864e5), y = x.getUTCFullYear(), m = x.getUTCMonth() - 1, dd = x.getUTCDate(); if (m < 0) { m = 11; y--; } var dim = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); return Math.floor(Date.UTC(y, m, Math.min(dd, dim)) / 864e5); }
+  function prevOf(st) {
+    var len = st.to - st.from + 1, cm = st.cm || 'prev';
+    if (cm === 'week') return { from: st.from - 7, to: st.from - 7 + len - 1 };
+    if (cm === 'month') { var f = shiftM_(st.from); return { from: f, to: f + len - 1 }; }
+    if (cm === 'custom' && st.cf) return { from: st.cf, to: st.cf + len - 1 };
+    return { from: st.from - len, to: st.from - 1 };
+  }
   function haveData(a, b) { for (var d = a; d <= b; d++) if (DAY[d]) return true; return false; }
   function daysIn(a, b, test) { var c = 0; for (var d = a; d <= b; d++) if (DAY[d] && (!test || test(d))) c++; return c; }
   function tot(a, b, fsel, unit, s) { var t = 0; for (var d = a; d <= b; d++) if (DAY[d]) t += sv(d, fsel, unit, s); return t; }
   function totF(a, b, f, unit, s) { var t = 0; for (var d = a; d <= b; d++) if (DAY[d]) t += fv(d, f, unit, s); return t; }
 
   /* ---------- state ---------- */
-  var G = { from: 0, to: 0, cmp: true, fsel: [true, true, true, true], pre: '90' };
-  function clone(s) { return { from: s.from, to: s.to, cmp: s.cmp, fsel: s.fsel.slice(), pre: s.pre }; }
+  var G = { from: 0, to: 0, cmp: true, cm: 'prev', cf: 0, fsel: [true, true, true, true], pre: '90' };
+  function clone(s) { return { from: s.from, to: s.to, cmp: s.cmp, cm: s.cm, cf: s.cf, fsel: s.fsel.slice(), pre: s.pre }; }
   function setPre(st, p) {
     st.pre = p;
     if (p === 'all') { st.from = FIRST; st.to = LATEST; }
@@ -438,7 +445,7 @@
     '.sx-date{border:1px solid #c9d7ea;border-radius:10px;padding:6px 8px;font:600 13px var(--f-body,inherit);background:#fff;color:#17233a}' +
     '.sx-tog{width:38px;height:22px;border-radius:12px;border:0;background:#c7d3e6;position:relative;cursor:pointer;padding:0}.sx-tog:after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}.sx-tog[aria-pressed=true]{background:#1f6be6}.sx-tog[aria-pressed=true]:after{left:19px}' +
     '.sx-dot{display:inline-block;width:11px;height:11px;border-radius:3px;box-shadow:0 0 0 1.5px #fff;margin-right:5px;vertical-align:-1px}.sx-dash{display:inline-block;width:18px;border-top:2px dashed #17233a;vertical-align:3px;margin-right:5px}' +
-    '.sx-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px}.sx-kpi .l{font-size:13px;color:#5b6b85}.sx-kpi .v{font:700 clamp(22px,2.4vw,30px) var(--f-display,inherit);margin:3px 0 1px}.sx-kpi .v small{font-size:13px;font-weight:500;color:#5b6b85;margin-left:4px}' +
+    '.sx-sub{font-size:11px;color:#8593a9;margin-top:2px}.sx-cmpsum{font-size:12.5px;color:#5b6b85;background:#f4f8fd;border-radius:10px;padding:5px 12px}.sx-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:12px}.sx-kpi .l{font-size:13px;color:#5b6b85}.sx-kpi .v{font:700 clamp(22px,2.4vw,30px) var(--f-display,inherit);margin:3px 0 1px}.sx-kpi .v small{font-size:13px;font-weight:500;color:#5b6b85;margin-left:4px}' +
     '.sx-d{font-size:12.5px;font-weight:600}.sx-d small{color:#8593a9;font-weight:400;margin-left:4px}.up{color:#12a150}.dn{color:#e03a3a}' +
     '.sx-grid{display:grid;gap:12px;margin-bottom:12px}.g2{grid-template-columns:1.55fr 1fr}.g3{grid-template-columns:1.5fr 1fr 1fr}.g4{grid-template-columns:1.25fr 1fr 1fr}' +
     '.sx-h{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}.sx-h h3{margin:0;font:600 16px var(--f-display,inherit);flex:1}.sx-h h3 small{font:400 12px var(--f-body,inherit);color:#6a7a94;margin-left:6px}' +
@@ -469,8 +476,16 @@
     var pres = [['7', '7 วัน'], ['30', '30 วัน'], ['90', '90 วัน'], ['all', 'ทั้งหมด']];
     return '<div class="sx-g">ช่วงเวลา ' + chipRow(pres, st.pre, 'data-pre') + '</div>' +
       '<div class="sx-g">กำหนดเอง <input type="date" class="sx-date" data-from min="' + iso(FIRST) + '" max="' + iso(LATEST) + '" value="' + iso(st.from) + '"> → <input type="date" class="sx-date" data-to min="' + iso(FIRST) + '" max="' + iso(LATEST) + '" value="' + iso(st.to) + '"></div>' +
-      '<div class="sx-g">เทียบช่วงก่อนหน้า <button type="button" class="sx-tog" data-cmp aria-pressed="' + st.cmp + '" aria-label="เทียบช่วงก่อนหน้า"></button><span data-prevlbl>' + prevLbl(st) + '</span></div>' +
+      cmpRow(st) +
       (withFuel ? '<div class="sx-g">ชนิด ' + [0, 1, 2, 3].map(function (f) { return '<button type="button" class="sx-chip sm fx" data-fuel="' + f + '" aria-pressed="' + st.fsel[f] + '"><i class="sx-dot" style="background:' + FC[f] + ';margin:0"></i>' + FN[f] + '</button>'; }).join('') + '</div>' : '');
+  }
+
+  var CMODES = [['prev', 'ช่วงก่อนหน้า'], ['month', 'เดือนก่อน (วันเดียวกัน)'], ['week', 'สัปดาห์ก่อน'], ['custom', 'กำหนดเอง']];
+  function cmpRow(st) {
+    var p = prevOf(st);
+    return '<div class="sx-g">เปรียบเทียบกับ <button type="button" class="sx-tog" data-cmp aria-pressed="' + st.cmp + '" aria-label="เปิด/ปิดการเปรียบเทียบ"></button>' +
+      (st.cmp ? chipRow(CMODES, st.cm || 'prev', 'data-cm', 'sm') + ((st.cm === 'custom') ? ' เริ่มวันที่ <input type="date" class="sx-date" data-cf min="' + iso(FIRST) + '" max="' + iso(LATEST) + '" value="' + iso(st.cf || p.from) + '">' : '') : '') + '</div>' +
+      (st.cmp ? '<div class="sx-g sx-cmpsum">ช่วงที่เลือก <b>' + th(st.from) + ' – ' + th(st.to) + '</b> เทียบกับ <b>' + th(p.from) + ' – ' + th(p.to) + '</b>' + (haveData(p.from, p.to) ? '' : ' <span style="color:#c0392b">(ไม่มีข้อมูลช่วงนี้)</span>') + '</div>' : '');
   }
   function prevLbl(st) { var p = prevOf(st); return haveData(p.from, p.to) ? th(p.from) + ' – ' + th(p.to) : 'ไม่มีข้อมูลช่วงก่อนหน้า'; }
 
@@ -478,6 +493,7 @@
     host.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b || !host.contains(b)) return;
       if (b.dataset.pre) { setPre(st, b.dataset.pre); onChange(true); }
+      else if (b.dataset.cm) { st.cm = b.dataset.cm; if (st.cm === 'custom' && !st.cf) st.cf = prevOf(st).from; onChange(true); }
       else if (b.hasAttribute('data-cmp')) { st.cmp = !st.cmp; onChange(true); }
       else if (b.dataset.fuel !== undefined && withFuel) {
         var f = +b.dataset.fuel, c = st.fsel.filter(Boolean).length;
@@ -486,7 +502,7 @@
       }
     });
     host.addEventListener('change', function (e) {
-      var t = e.target; if (!t.classList.contains('sx-date')) return;
+      var t = e.target; if (t.hasAttribute && t.hasAttribute('data-cf')) { if (t.value) { st.cf = Math.min(LATEST, Math.max(FIRST, di(t.value))); onChange(true); } return; } if (!t.classList.contains('sx-date')) return;
       var a = t.hasAttribute('data-from') ? 'from' : 'to', v = t.value; if (!v) return;
       st[a] = Math.min(LATEST, Math.max(FIRST, di(v)));
       if (st.from > st.to) { if (a === 'from') st.to = st.from; else st.from = st.to; }
@@ -532,9 +548,12 @@
     var tb = tot(st.from, st.to, st.fsel, 'baht', -1), tl = tot(st.from, st.to, st.fsel, 'L', -1), tc = tot(st.from, st.to, st.fsel, 'cars', -1), nd = daysIn(st.from, st.to);
     var P = function (u) { return usePrev ? tot(pv.from, pv.to, st.fsel, u, -1) : 0; }, pnd = usePrev ? daysIn(pv.from, pv.to) : 0;
     var D = function (a, b) { return usePrev && b ? dtag(dlt(a, b)) : '<div class="sx-d">&nbsp;</div>'; };
-    var K = [['ยอดขายรวม', n(tb), 'บาท', D(tb, P('baht'))], ['ปริมาณขาย (จาก POS)*', n(tl), 'ลิตร', D(tl, P('L'))], ['จำนวนรถ', n(tc), 'คัน', D(tc, P('cars'))],
-      ['Ticket size เฉลี่ย', tc ? n(tb / tc) : '–', 'บาท/คัน', D(tc ? tb / tc : 0, P('cars') ? P('baht') / P('cars') : 0)], ['เฉลี่ยต่อวัน', nd ? n(tc / nd) : '–', 'คัน', D(nd ? tc / nd : 0, pnd ? P('cars') / pnd : 0)]];
-    return K.map(function (k) { return '<div class="sx-card sx-kpi"><div class="l">' + k[0] + '</div><div class="v">' + k[1] + '<small>' + k[2] + '</small></div>' + k[3] + '</div>'; }).join('');
+    var K = [['ยอดขายรวม', n(tb), 'บาท', D(tb, P('baht')), ''], ['ปริมาณขาย (จาก POS)*', n(tl), 'ลิตร', D(tl, P('L')), ''],
+      ['ลิตรเฉลี่ย / วัน', nd ? n(tl / nd) : '–', 'ลิตร/วัน', D(nd ? tl / nd : 0, pnd ? P('L') / pnd : 0), nd ? n(tl) + ' ÷ ' + nd + ' วัน' : ''],
+      ['จำนวนรถ', n(tc), 'คัน', D(tc, P('cars')), ''],
+      ['คันเฉลี่ย / วัน', nd ? n(tc / nd) : '–', 'คัน/วัน', D(nd ? tc / nd : 0, pnd ? P('cars') / pnd : 0), nd ? n(tc) + ' ÷ ' + nd + ' วัน' : ''],
+      ['Ticket size เฉลี่ย', tc ? n(tb / tc) : '–', 'บาท/คัน', D(tc ? tb / tc : 0, P('cars') ? P('baht') / P('cars') : 0), '']];
+    return K.map(function (k) { return '<div class="sx-card sx-kpi"><div class="l">' + k[0] + '</div><div class="v">' + k[1] + '<small>' + k[2] + '</small></div>' + k[3] + (k[4] ? '<div class="sx-sub">' + k[4] + '</div>' : '') + '</div>'; }).join('');
   }
 
   var pageCards = [];
